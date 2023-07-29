@@ -4,3 +4,6 @@ version = "0.1.0"
 
 [build]
 reset_type = "sync_high"
+
+[publish]
+publish_commit = true
