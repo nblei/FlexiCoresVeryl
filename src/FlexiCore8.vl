@@ -1,0 +1,88 @@
+module FlexiCore8
+(
+    i_clk:  input logic<1>,
+    i_rst:  input logic<1>,
+    i_inst: input logic<FlexiCore8_pkg::IW>,
+    i_data: input logic<FlexiCore8_pkg::DW>,
+    o_addr: output logic<FlexiCore8_pkg::PCLen>,
+    o_data: output logic<FlexiCore8_pkg::DW>,
+)
+{
+    var pc: logic<FlexiCore8_pkg::PCLen>;
+    var acc: logic<FlexiCore8_pkg::DW>;
+    var rf: logic<FlexiCore8_pkg::DW> [FlexiCore8_pkg::RFSize];
+
+    var rf_addr: logic<FlexiCore8_pkg::AddrSize>;
+    assign rf_addr = FlexiCore8_pkg::get_src_addr(i_inst);
+    
+    var rf_data: logic<FlexiCore8_pkg::DW> = if rf_addr != 0 { rf[rf_addr] } else { i_data };
+    var immdata: logic<FlexiCore8_pkg::DW> = FlexiCore8_pkg::get_imm(i_inst);
+    var srcdata: logic<FlexiCore8_pkg::DW> = if FlexiCore8_pkg::is_itype(i_inst) {
+            immdata } else { rf_data };
+
+
+    var cbit: logic<1>;
+
+    var is_br: logic<1>;
+    assign is_br = FlexiCore8_pkg::is_branch(i_inst);
+
+    var take_br: logic<1>;
+    assign take_br = is_br & acc[7];
+
+    // Branch Logic
+    always_ff (i_clk, i_rst) {
+        if_reset {
+            pc = '0;
+        } else if take_br {
+            pc = FlexiCore8_pkg::br_tgt(i_inst);
+        } else {
+            pc = pc + 1;
+        }
+    }
+
+    // ALU
+    var adc: logic<FlexiCore8_pkg::DW+1>;
+    assign adc = {1'b0,  acc} + {1'b0, srcdata} + cbit;
+    var _add: logic<FlexiCore8_pkg::DW+1>;
+    assign _add = {1'b0,  acc} + {1'b0, srcdata};
+    var _nand: logic<FlexiCore8_pkg::DW> = ~(acc & srcdata);
+    var _xor: logic<FlexiCore8_pkg::DW> = ~(acc ^ srcdata);
+
+    var was_load: logic<1>;
+
+    // was_load logic
+    always_ff (i_clk, i_rst) {
+        if_reset {
+            was_load = 0;
+        } else {
+            was_load = FlexiCore8_pkg::is_load(i_inst) & (~was_load);
+        }
+    }
+
+    // rf logic
+    always_ff (i_clk) {
+        if FlexiCore8_pkg::is_rf_store(i_inst) && rf_addr != 1 {
+            rf[rf_addr] = acc;
+        }
+    }
+
+    // Acc logic
+    always_ff (i_clk, i_rst) {
+        if_reset {
+            acc = 0;
+        } else if was_load {
+            acc = i_inst;
+        } else if FlexiCore8_pkg::is_acc_store(i_inst) {
+            acc = rf_data;
+        } else if FlexiCore8_pkg::is_alu(i_inst) {
+            case (i_inst[1:0]) {
+                2'b00: acc = _add;
+                2'b01: acc = _xor;
+                2'b10: acc = _nand;
+            }
+        }
+    }
+    assign o_addr = pc;
+    assign o_data = rf[1];
+}
+

@@ -1,0 +1,6 @@
+[project]
+name = "FlexiCore8"
+version = "0.1.0"
+
+[build]
+reset_type = "sync_high"

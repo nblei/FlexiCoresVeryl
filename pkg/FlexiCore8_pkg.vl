@@ -1,0 +1,80 @@
+package FlexiCore8_pkg {
+    localparam IW   : u32 = 8;
+    localparam DW   : u32 = 8;
+    localparam PCLen: u32 = IW - 1;
+    localparam RFSize: u32 = 8;
+    localparam AddrSize: u32 = $clog2(RFSize);
+
+    localparam RepNum: u32 = DW-4;
+
+    enum AluOp: logic<2> {
+        add = 2'b00,
+        xor = 2'b01,
+        nand = 2'b10,
+        // adc = 2'b11,
+    }
+
+    // a -> inst
+    function is_branch (
+        a: input logic<IW>,
+    ) -> logic<1> {
+        return a[7];
+    }
+
+    function br_tgt (
+        a: input logic<IW>,
+    ) -> logic<PCLen> {
+        return a[6:0];
+    }
+
+    function is_itype (
+        a: input logic<IW>,
+    ) -> logic<1> {
+        return a[7:6] == 2'b01;
+    }
+
+    function is_ttype (
+        a: input logic<IW>,
+    ) -> logic<1> {
+        return a[7:4] == 4'b0111;
+    }
+
+    function is_mtype (
+        a: input logic<IW>,
+    ) -> logic<1> {
+        return a[7:4] == 2'b00 && a[3] == 1'b0;
+    }
+
+    function is_alu (
+        a: input logic<IW>,
+    ) -> logic<1> {
+        return is_itype(a) | is_mtype(a);
+    }
+
+    function is_load (
+        a: input logic<IW>,
+    ) -> logic<1> {
+        return a == 8'b00001000;
+    }
+
+    function is_rf_store (
+        a: input logic<IW>,
+    ) -> logic<1> {
+        return is_ttype(a) && a[3];
+    }
+
+    function is_acc_store (
+        a: input logic<IW>,
+    ) -> logic<1> {
+        return is_ttype(a) && ~a[3];
+    }
+    
+    function get_imm(a: input logic<IW>) -> logic<DW> {
+        return {a[3] repeat RepNum, a[3:0]};
+    }
+
+    function get_src_addr (a: input logic<IW>) -> logic<AddrSize> {
+        return a[AddrSize-1:0];
+    }
+
+}
