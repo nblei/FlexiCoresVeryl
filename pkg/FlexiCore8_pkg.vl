@@ -1,11 +1,11 @@
 package FlexiCore8_pkg {
-    localparam IW   : u32 = 8;
-    localparam DW   : u32 = 8;
-    localparam PCLen: u32 = IW - 1;
-    localparam RFSize: u32 = 8;
+    localparam IW      : u32 = 8;
+    localparam DW      : u32 = 8;
+    localparam PCLen   : u32 = IW - 1;
+    localparam RFSize  : u32 = 8;
     localparam AddrSize: u32 = $clog2(RFSize);
 
-    localparam RepNum: u32 = DW-4;
+    localparam RepNum: u32 = DW - 4;
 
     enum AluOp: logic<2> {
         add = 2'b00,
@@ -68,13 +68,17 @@ package FlexiCore8_pkg {
     ) -> logic<1> {
         return is_ttype(a) && ~a[3];
     }
-    
-    function get_imm(a: input logic<IW>) -> logic<DW> {
+
+    function get_imm (
+        a: input logic<IW>,
+    ) -> logic<DW> {
         return {a[3] repeat RepNum, a[3:0]};
     }
 
-    function get_src_addr (a: input logic<IW>) -> logic<AddrSize> {
-        return a[AddrSize-1:0];
+    function get_src_addr (
+        a: input logic<IW>,
+    ) -> logic<AddrSize> {
+        return a[AddrSize - 1:0];
     }
 
 }
