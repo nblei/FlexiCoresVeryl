@@ -46,7 +46,7 @@ module FlexiCore8 (
 
     // ALU
     var adc  : logic<FlexiCore8_pkg::DW + 1>;
-    assign adc   = {1'b0, acc} + {1'b0, srcdata} + cbit;
+    assign adc   = {1'b0, acc} + {1'b0, srcdata} + {8'h00, cbit};
     var _add : logic<FlexiCore8_pkg::DW + 1>;
     assign _add  = {1'b0, acc} + {1'b0, srcdata};
     var _nand: logic<FlexiCore8_pkg::DW> = ~(acc & srcdata);
@@ -80,9 +80,10 @@ module FlexiCore8 (
             acc = rf_data;
         } else if FlexiCore8_pkg::is_alu(instr) {
             case (instr[1:0]) {
-                2'b00: acc = _add;
+                2'b00: acc = _add[7:0];
                 2'b01: acc = _xor;
                 2'b10: acc = _nand;
+                default: acc = _nand;
             }
         }
     }
