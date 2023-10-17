@@ -1,3 +1,5 @@
 *.sv
 *.f
 *.lock
+pdk
+syn
