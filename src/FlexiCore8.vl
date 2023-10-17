@@ -65,7 +65,7 @@ module FlexiCore8 (
 
     // rf logic
     always_ff (clk) {
-        if FlexiCore8_pkg::is_rf_store(instr) && rf_addr != 1 {
+        if FlexiCore8_pkg::is_rf_store(instr) && rf_addr != 0 {
             rf[rf_addr] = acc;
         }
     }
